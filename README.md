@@ -14,3 +14,4 @@ Atualmente, o github contém apenas o código em C para o microcontrolador, que 
 O código em Python já foi iniciado e o código em Java para o minecraft ainda está em fase de estudo.. mas já tem mostrando resultado.
 
 Quem tiver conhecimento em linguagem C e quiser realizar alguns ajustes sinta-se a vontade :)
+(de cara já encontrei alguns erros de sintaxe no programa, mas que serão ajeitados apenas n'outro dia)

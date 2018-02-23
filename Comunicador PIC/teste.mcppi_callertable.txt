@@ -1,0 +1,8 @@
+main
+	__CC2DW
+	loop
+		read
+			servico
+interrupt_low
+	____DoIFC
+interrupt

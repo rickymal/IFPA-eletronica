@@ -20,26 +20,57 @@ char timer4timer , timer6timer; //auxiliares:determina um controle melhor dos ti
 //typedef int (*assist)();
 void (*assist)(); //determina um ponteiro d efunção que dirá o que será feito na assistência (atualmente só existe um comando, porém terá implementações)
 
-
-void assistente()  //método que realiza a limpeza do buffer, ou melhor, uma mensagem que já foi lida e interpretada
+void limpaBuffer()  //método que realiza a limpeza do buffer, ou melhor, uma mensagem que já foi lida e interpretada
 {
   int x = margeIn;
   int y = margeOut;
   using_assist = 1;
-
-
   for(y; y > x;  y--) buffer[y] = 0xFF;
   margeIn = margeOut = using_assist = 0;
-
 
 }
 
 void servico(char intent_field){ //determina o serviço que será utilizado
   tent = intent_field;
-  assist = assistente;
-
+  assist = limpaBuffer;
   if(tent) overflow = 1;// provoco um estouro intencional para cuidar realizar assistencia no buffer
+}
 
+
+void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)  //serve para os timer's 2/4/6
+{
+int Tof; //tempo de overflow
+int Tmof; //tempo para todos os overflow (multiplos overflows
+int i = 30;
+int resposta[30];
+int prescaler = 1;
+int postscaler = 1;
+Tof = 256*frequencia/4;
+Tmof = tempo_seg/Tof;
+
+
+for(postscaler = 3; postscaler > 0; postscaler--)
+{
+ for(prescaler = 16; prescaler > 0; prescaler--)
+ {
+    if(Tmof%(prescaler*postscaler) == 0) goto LABEL;
+ 
+ 
+ }
+
+
+}
+
+LABEL:
+  if(timer == &TMR6) //estou mexendo comm o Timer6?
+  {
+
+  T6CON = prescaler <<  6;
+  T6CON += postscaler;
+  TMR6 = 0;
+  timer6timer = Tmof / (prescaler + postscaler);
+  return ;
+  }
 }
 
 char read(char *mensagem) //retorna 1 se a mensagem for encontrada e zero caso não (no buffer, no caso)
@@ -56,13 +87,8 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
    margeOut = i+j;
    servico(servico_limpar_buffer);
    return 1;
-
-
   }
-
-
  }
-
 }
 return 0;
 }
@@ -75,37 +101,26 @@ unsigned char loop()
  PORTB = 0xFF;
  }
 
-
  if(read("CELL:ApagarLED"))
  {
   PORTB = 0x00;
-
  }
-
-
-
-
+ 
 return 0;
 }
-
 
 void interrupt_low()  //a interrupção de baixa prioridade que chamará os serviços
 {
 if(timer4timer < 136) asm retfie;
 if(timer6timer < 136) asm retfie;
-
 if(overflow) assist();overflow = 0;
-
 } //end interrupt low
-
 
 void interrupt() //a interrupção de alta prioridade apenas armazenará os dados recebidos (no momento apenas do computador)
 {
-
   buffer[posBuffer] = RC1REG;
   posBuffer++;
   buffer[posBuffer] = 0x00;
-
 }
 
 void main()
@@ -199,27 +214,15 @@ T4CON = 0b00111001; //define um tempo para 10 ms (pode estar errao por hora) con
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
 
-
-
 //============= Inicio do programa =============== //
 for(i = 0; i < tamanhoBuffer;i++) buffer[i] = 0xFF;
-
-
 while(1)
 {
- retorno = loop();
-
-if(posBuffer > offset)
-{
- posBuffer = 0;
-// while(buffer[posBuffer] != 0xFF) posBuffer++;
-}
-
-
-}
-
-
-
-
-
+    retorno = loop();
+    if(posBuffer > offset)
+    {
+     posBuffer = 0;
+    // while(buffer[posBuffer] != 0xFF) posBuffer++;
+    }
+  }
 }

@@ -36,11 +36,10 @@ void servico(char intent_field){ //determina o serviço que será utilizado
   if(tent) overflow = 1;// provoco um estouro intencional para cuidar realizar assistencia no buffer
 }
 
-
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)  //serve para os timer's 2/4/6
 {
-int Tof; //tempo de overflow
-int Tmof; //tempo para todos os overflow (multiplos overflows
+double Tof; //tempo de overflow
+double Tmof; //tempo para todos os overflow (multiplos overflows
 int i = 30;
 int resposta[30];
 int prescaler = 1;
@@ -48,12 +47,11 @@ int postscaler = 1;
 Tof = 256*frequencia/4;
 Tmof = tempo_seg/Tof;
 
-
 for(postscaler = 3; postscaler > 0; postscaler--)
 {
  for(prescaler = 16; prescaler > 0; prescaler--)
  {
-    if(Tmof%(prescaler*postscaler) == 0) goto LABEL;
+    if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
  
  
  }

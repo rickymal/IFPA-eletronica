@@ -27,11 +27,10 @@ void servico(char intent_field){
  if(tent)  TMR6IF_bit  = 1;
 }
 
-
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
 {
-int Tof;
-int Tmof;
+double Tof;
+double Tmof;
 int i = 30;
 int resposta[30];
 int prescaler = 1;
@@ -39,12 +38,11 @@ int postscaler = 1;
 Tof = 256*frequencia/4;
 Tmof = tempo_seg/Tof;
 
-
 for(postscaler = 3; postscaler > 0; postscaler--)
 {
  for(prescaler = 16; prescaler > 0; prescaler--)
  {
- if(Tmof%(prescaler*postscaler) == 0) goto LABEL;
+ if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
 
 
  }
@@ -117,7 +115,7 @@ void interrupt()
 void main()
 {
 int i;
-#line 139 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 137 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 TXSTA2.BRGH = 1;
 BAUDCON2.BRG16 = 1;
 SPBRGH2 = 0x00;
@@ -128,13 +126,13 @@ SPBRG2 = 0x45;
 TRISB = 0xFF;
 TRISC = 0xFF;
 TRISD = 0xFF;
-#line 160 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 158 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 TXSTA2.SYNC = 0;
 RCSTA2.SPEN = 1;
 TXSTA2.TXEN = 1;
 TX2IE_bit = 0;
 ANSELD = 0x00;
-#line 175 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 173 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 RCSTA2.CREN = 1;
 
 
@@ -146,7 +144,7 @@ while(PIR3.RC2IF) {RCREG2;}
 INTCON.GIE = 0x01;
 INTCON.PEIE = 0x01;
 RCON.IPEN = 0x01;
-#line 196 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 194 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 IPR3.RC2IP = 0x01;
 IPR3.TX2IP = 0x01;
 PIR3.TX2IF = 0x00;

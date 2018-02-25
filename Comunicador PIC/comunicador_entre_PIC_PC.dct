@@ -4392,7 +4392,6 @@ length
 lf
 lfiofs
 lfiofs_bit
-limpabuffer
 linestride
 linestride
 linestride
@@ -5387,13 +5386,11 @@ sendb1
 sendb1_bit
 sendb2
 sendb2_bit
-servico
 setfdz32
 setfov32
 setfun32
 setiov3224
 setjmp
-settime
 shorttohex
 shorttostr
 shorttostrwithzeros
@@ -6674,6 +6671,7 @@ using_assist
 val
 val
 val
+valor
 vcycle
 vcycle
 vcycle

@@ -34,13 +34,13 @@ Count=0
 [OTHER_FILES]
 Count=0
 [SEARCH_PATH]
-Count=7
+Count=6
 Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Defs\
 Path1=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\uses\P18\
 Path2=C:\Users\Henrique Mauler\Documents\Programação\C\Trabalhos 2018\Conectando Celular e Minecraft\Comunicador PIC\
-Path4=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT800\Uses\
-Path5=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT810\Uses\
-Path6=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT812\Uses\
+Path3=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT800\Uses\
+Path4=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT810\Uses\
+Path5=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT812\Uses\
 [HEADER_PATH]
 Count=3
 Path0=C:\Users\Public\Documents\Mikroelektronika\mikroC PRO for PIC\Packages\FT800\Uses\

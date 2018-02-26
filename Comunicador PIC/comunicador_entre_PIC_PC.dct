@@ -2312,6 +2312,7 @@ c5tsel0
 c5tsel0_bit
 c5tsel1
 c5tsel1_bit
+cache
 canspigetoperationmode
 canspiinitialize
 canspiread
@@ -3995,6 +3996,7 @@ g
 g
 g
 g
+gamebuffer
 gcen
 gcen_bit
 gcen_ssp1con2_bit
@@ -4216,7 +4218,6 @@ intedg1_bit
 intedg2
 intedg2_bit
 interrupt
-interrupt_low
 intsrc
 intsrc_bit
 inttohex
@@ -4778,6 +4779,7 @@ p3ssbd0_bit
 p3ssbd1
 p3ssbd1_bit
 pc
+pcache
 pcie
 pcie_bit
 pcie_ssp1con3_bit
@@ -4879,6 +4881,7 @@ portc
 portd
 porte
 posbuffer
+posgamebuffer
 postdec0
 postdec1
 postdec2
@@ -5391,6 +5394,7 @@ setfov32
 setfun32
 setiov3224
 setjmp
+settime
 shorttohex
 shorttostr
 shorttostrwithzeros

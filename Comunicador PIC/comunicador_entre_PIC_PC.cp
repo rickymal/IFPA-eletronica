@@ -1,18 +1,63 @@
 #line 1 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-#line 13 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-char buffer[ 30 ];
-int posBuffer = 0;
-int margeIn;
-int margeOut;
-int tent;
-char using_assist = 0;
+#line 15 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+register char buffer[ 40 ];
+register char GameBuffer[ 40 ];
+volatile int posBuffer = 0;
+volatile int posGameBuffer = 0;
+unsigned int margeIn;
+unsigned int margeOut;
+unsigned short tent;
+unsigned short using_assist = 0;
 unsigned short retorno;
 char timer4timer , timer6timer;
-
+typedef int (*entradaParaFunc)();
 void (*assist)();
 unsigned char valor = 3 absolute 0x0F45;
 static char const * const msgTable[];
-#line 75 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+typedef char BBuffer[ 40 ];
+register BBuffer cache;
+BBuffer *pCache;
+#pragma pack(2)
+#line 33 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+typedef struct filesys
+{
+unsigned int pos : 1;
+unsigned short rand : 4;
+unsigned short : 0;
+} filesys;
+
+
+
+void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
+{
+double Tof;
+double Tmof;
+int i = 30;
+int resposta[30];
+int prescaler = 1;
+int postscaler = 1;
+Tof = 256*frequencia/4;
+Tmof = tempo_seg/Tof;
+
+for(postscaler = 3; postscaler > 0; postscaler--)
+{
+ for(prescaler = 16; prescaler > 0; prescaler--)
+ {
+ if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
+ }
+}
+LABEL:
+ if(timer == &TMR6)
+ {
+ T6CON = 0x00;
+ T6CON = prescaler << 6;
+ T6CON += postscaler;
+ TMR6 = 0;
+ timer6timer = Tmof / (prescaler + postscaler);
+ return ;
+ }
+}
+#line 97 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 char read(char *mensagem)
 {
 int i;
@@ -25,8 +70,8 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
  {
  margeIn = i;
  margeOut = i+j;
- mensagem[j+1] = 0xFF;
-
+ buffer[i+j] = 0xFF;
+ buffer[i+j-1] = 0xFF;
  return 1;
  }
  }
@@ -34,33 +79,36 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
 return 0;
 }
 
+
+
 unsigned short loop()
 {
- if(read("Enviando"))
- {
- PORTB.RB0 = ~PORTB.RB0;
- return 0;
- }
+  if(read("left"))  PORTB = 0xFF;
 
- if(read("Enviado"))
- {
- PORTB.RB1 = ~PORTB.RB1;
- }
-return 0;
+  if(read("right"))  PORTB = 0x00;
+
 }
 
-void interrupt_low()
-{
-if(timer4timer < 136) asm retfie;
-if(timer6timer < 136) asm retfie;
-if( TMR6IF_bit ) assist(); TMR6IF_bit  = 0;
-}
+
 
 void interrupt()
 {
+ if(RC1IF_bit)
+ {
  buffer[posBuffer] = RC1REG;
  posBuffer++;
  buffer[posBuffer] = 0x00;
+ }
+
+ if(RC2IF_bit)
+ {
+ *(volatile int *)&GameBuffer[posGameBuffer] = RC2REG;
+ posGameBuffer++;
+ GameBuffer[posGameBuffer] = 0x00;
+
+ }
+
+
 }
 
 void main()
@@ -131,6 +179,7 @@ PIR3.RC2IF = 0x00;
 PIE3.RC2IE = 0x01;
 
 
+
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
 PIE5.TMR6IE = 1;
@@ -141,18 +190,20 @@ TMR6 = 0;
 TMR4 = 0;
 T6CON = 0b00111001;
 T4CON = 0b00111001;
+
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
 delay_ms(10);
 
 
-for(i = 0; i <  30 ;i++) buffer[i] = 0xFF;
+for(i = 0; i <  40 ;i++) buffer[i] = 0xFF;
+
 posBuffer = 0;
 PORTB = 0x00;
 while(1)
 {
  retorno = loop();
- if(posBuffer >  3* 30 /2 )
+ if(posBuffer > 35)
  {
  posBuffer = 0;
 

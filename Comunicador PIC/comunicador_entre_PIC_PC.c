@@ -1,5 +1,5 @@
-#define tamanhoBuffer 30
-#define offset 3*tamanhoBuffer/2
+#define tamanhoBuffer 40
+#define offset 2*tamanhoBuffer/3
 #define servico_limpar_buffer 1
 #define servico_reiniciar_buffer 0
 #define overflow TMR6IF_bit
@@ -10,21 +10,36 @@
 
 // https://pt.stackoverflow.com/questions/2983/como-passar-uma-função-como-parâmetro-em-c //
 
-char buffer[tamanhoBuffer];  //armazena o buffer
-int posBuffer = 0; //defina a atual posição do buffer
-int margeIn; //define a posição mínima de onde se encontra a úttima mensagem recebida pro buffer
-int margeOut; //define a posição máxima de onde se encontra a útlima mensagem recebida pro buffer
-int tent; //auxiliar:recebe a instrução que será usada na assistencia
-char using_assist = 0; //flag:determina se a assistência está sendo utilizada
-unsigned short retorno; //armazena o retorno da função loop para um possível tratamento (atualmente nenhum tratamnto é realizado)
-char timer4timer , timer6timer; //auxiliares:determina um controle melhor dos timer's (atualmente ainda não utilizado, apenas escrito no código mas sem nenhuma função no momento)
-//typedef int (*assist)();
-void (*assist)(); //determina um ponteiro d efunção que dirá o que será feito na assistência (atualmente só existe um comando, porém terá implementações)
+// double *p[x] != double(*p)[x]    O primeiro cria um vetor de ponteiros para inteiros e o segundo cria um único ponteiro para um vetor de x posições
+
+register char buffer[tamanhoBuffer];
+register char GameBuffer[tamanhoBuffer];                                                  //armazena o buffer no registrador da CPU, para acesso mais rápido
+volatile int posBuffer = 0;                                                               //defina a atual posição do buffer, tipo volatile para impedir que o compilador tente otimiza-lo transformado-a em estática ou modificando as funções que a utiliza
+volatile int posGameBuffer = 0;
+unsigned int margeIn;                                                                     //define a posição mínima de onde se encontra a úttima mensagem recebida pro buffer
+unsigned int margeOut;                                                                    //define a posição máxima de onde se encontra a útlima mensagem recebida pro buffer
+unsigned short tent;                                                                               //auxiliar:recebe a instrução que será usada na assistencia
+unsigned short using_assist = 0;                                                                    //flag:determina se a assistência está sendo utilizada
+unsigned short retorno;                                                                   //armazena o retorno da função loop para um possível tratamento (atualmente nenhum tratamnto é realizado)
+char timer4timer , timer6timer;                                                           //auxiliares:determina um controle melhor dos timer's (atualmente ainda não utilizado, apenas escrito no código mas sem nenhuma função no momento)
+typedef int (*entradaParaFunc)();
+void (*assist)();                                                                         //determina um ponteiro d efunção que dirá o que será feito na assistência (atualmente só existe um comando, porém terá implementações)
 unsigned char valor = 3 absolute 0x0F45;
 static char const * const msgTable[];
+typedef char BBuffer[tamanhoBuffer];   //cria uma variavel do tipo "BBuffer" (que na verdade é um char de tamanho 'tamanhoBuffer'
+register BBuffer cache;
+BBuffer *pCache; // ou char (*pCache)[tamanhoBuffer];
+#pragma pack(2)
+typedef struct filesys
+{
+unsigned int pos : 1;
+unsigned short rand : 4;
+unsigned short : 0;
+} filesys;
 
-/*       Os métodos abaixo não estão sendo utilizados, o programa tem funcionando perfeitamente sem o uso d'eles. Porém, futuramente podem ser necessários
-void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)  //serve para os timer's 2/4/6 - é possível pre-processa-lo?
+
+ //serve para os timer's 2/4/6 - é possível pre-processa-lo? - função aumenta o pograma em 7kb, não muito prático
+void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
 {
 double Tof; //tempo de overflow
 double Tmof; //tempo para todos os overflow (multiplos overflows
@@ -42,7 +57,6 @@ for(postscaler = 3; postscaler > 0; postscaler--)
     if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
  }
 }
-
 LABEL:
   if(timer == &TMR6) //estou mexendo comm o Timer6?
   {
@@ -55,6 +69,7 @@ LABEL:
   }
 }
 
+/*       Os métodos abaixo não estão sendo utilizados, o programa tem funcionando perfeitamente sem o uso d'eles. Porém, futuramente podem ser necessários
 void limpaBuffer()  //método que realiza a limpeza do buffer, ou melhor, uma mensagem que já foi lida e interpretada
 {
   int x = margeIn;
@@ -71,6 +86,13 @@ void servico(char intent_field)
   if(tent) overflow = 1;// provoco um estouro intencional para cuidar realizar assistencia no buffer
 }
 
+void interrupt_low()  //a interrupção de baixa prioridade que chamará os serviços
+{
+if(timer4timer < 136) asm retfie;
+if(timer6timer < 136) asm retfie;
+if(overflow) assist();overflow = 0;
+} //end interrupt low
+
 */
 char read(char *mensagem) //retorna 1 se a mensagem for encontrada e zero caso não (no buffer, no caso)
 {
@@ -84,8 +106,8 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
   {
    margeIn = i;
    margeOut = i+j;
-   mensagem[j+1] = 0xFF;
-   //servico(servico_limpar_buffer);  não será necessário por hora
+   buffer[i+j] = 0xFF;
+   buffer[i+j-1] = 0xFF;
    return 1;
   }
  }
@@ -93,33 +115,36 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
 return 0;
 }
 
+
+#define read(t) if(read(t))
 unsigned short loop()
 {
- if(read("Enviando"))
- {
-  PORTB.RB0 = ~PORTB.RB0;
-  return 0;
- }
+ read("left") PORTB = 0xFF;
  
- if(read("Enviado"))
- {
-  PORTB.RB1 = ~PORTB.RB1;
- }
-return 0;
+ read("right") PORTB = 0x00;
+ 
 }
 
-void interrupt_low()  //a interrupção de baixa prioridade que chamará os serviços
-{
-if(timer4timer < 136) asm retfie;
-if(timer6timer < 136) asm retfie;
-if(overflow) assist();overflow = 0;
-} //end interrupt low
+
 
 void interrupt() //a interrupção de alta prioridade apenas armazenará os dados recebidos (no momento apenas do computador)
 {
-  buffer[posBuffer] = RC1REG;
-  posBuffer++;
-  buffer[posBuffer] = 0x00;
+  if(RC1IF_bit)
+  {
+    buffer[posBuffer] = RC1REG;
+    posBuffer++;
+    buffer[posBuffer] = 0x00;
+  }
+  
+  if(RC2IF_bit)
+  {
+     *(volatile int *)&GameBuffer[posGameBuffer] = RC2REG; //método para não termos otimização nesta área em específica, sem precisar do volatile
+     posGameBuffer++;
+     GameBuffer[posGameBuffer] = 0x00;
+  
+  }
+  
+
 }
 
 void main()
@@ -189,6 +214,7 @@ PIE3.TX2IE = 0x00;            //desabilita interrupção por tx
 PIR3.RC2IF = 0x00;            //flag setada para um enquanto houver dados para receber e tratar
 PIE3.RC2IE = 0x01;            // habilita a interrpção por rx
 
+ #define setTime(t,p) setTime(&t,p,31000000)
 //============= Configurações de Timer's =============== //
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
@@ -200,21 +226,23 @@ TMR6 = 0;
 TMR4 = 0;
 T6CON = 0b00111001; //os valores do timer ainda devem ser ajustados corretamente
 T4CON = 0b00111001; //define um tempo para 10 ms (pode estar errao por hora) considerando uma entrada de 136 vezes na interrupção  e uma frequencia d 31MHz
+//setTime(TMR6, 0.5);
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
 delay_ms(10);
 
 //============= Inicio do programa =============== //
 for(i = 0; i < tamanhoBuffer;i++) buffer[i] = 0xFF;
+
 posBuffer = 0;
 PORTB = 0x00;
 while(1)
 {
     retorno = loop();
-    if(posBuffer > offset)   //chance de corrupção de dados
+    if(posBuffer > 35)   //chance de corrupção de dados
     {
      posBuffer = 0;
-    // while(buffer[posBuffer] != 0xFF) posBuffer++;
+
     }
   }
 }

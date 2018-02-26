@@ -9,6 +9,7 @@ serial2 = 5454;
 localhost = "127.0.0.1"
 porta = 'COM1'
 status = False;
+ser = serial.Serial();
 
 def t1():
     while True:
@@ -42,28 +43,32 @@ def iniciarUdp():
     thread1.start();
     thread1.join();
 
-def configurarSerial(self):
-    self.baundrate = input('defina o baundrate ');
-    self.porta = input('qual a porta? ')
-    self.ser = serial.Serial();
-    ser.baundrate = self.baundrate;
-    ser.port = self.porta;
+def configurarSerial():
+    baundrate = int(input('defina o baundrate '));
+    porta = input('qual a porta? ')
+    global ser;
+    ser.baundrate = baundrate;
+    ser.port = porta;
     
     try:
         ser.open()
         if ser.is_open:
             print('porta aberta com sucesso')
-            self.status = True;
+            status = True;
+            
     finally:
         pass;
 
-def serialMensagem(self):
-    if(self.status == False):
-        return;
-    self.ser.write("Testando".format('ascii'));
+def serialMensagem():
+    global ser;
+    asc = input('digite a instrução de envio: ')
+    print(asc);
+    ser.write(b'left')
     
     
 
+
+#o programa
 
 print('Programa de comunicaçao entre canal udp e serial\r\n');
 
@@ -84,10 +89,12 @@ while True:
               if x != "":
                   serial2 = x;
     elif comando == 'serial':
-        print('ainda será implementado\r\n');
-    elif comando == 'iniciarUdp':
+        configurarSerial()
+    elif comando == 'initudp':
         iniciarUdp();
         time.sleep(0.5);
+    elif comando == 'initserial':
+        serialMensagem();
     else:
         print('comando não encontrado\r\n');
 

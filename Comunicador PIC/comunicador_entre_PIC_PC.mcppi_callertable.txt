@@ -2,6 +2,4 @@ main
 	__CC2DW
 	loop
 		read
-interrupt_low
-	____DoIFC
 interrupt

@@ -1,5 +1,5 @@
 #line 1 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-#line 15 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 18 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 register char buffer[ 40 ];
 register char GameBuffer[ 40 ];
 volatile int posBuffer = 0;
@@ -18,32 +18,26 @@ typedef char BBuffer[ 40 ];
 register BBuffer cache;
 BBuffer *pCache;
 #pragma pack(2)
-#line 33 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 37 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 typedef struct filesys
 {
 unsigned int pos : 1;
+unsigned short : 1;
 unsigned short rand : 4;
-unsigned short : 0;
+struct filesys (*find)(void);
 } filesys;
-
 
 
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
 {
-double Tof;
-double Tmof;
-int i = 30;
-int resposta[30];
 int prescaler = 1;
 int postscaler = 1;
-Tof = 256*frequencia/4;
-Tmof = tempo_seg/Tof;
-
+int Tmof = (int)(tempo_seg/(256*frequencia/4));
 for(postscaler = 3; postscaler > 0; postscaler--)
 {
  for(prescaler = 16; prescaler > 0; prescaler--)
  {
- if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
+ if(Tmof%(prescaler*postscaler) == 0) goto LABEL;
  }
 }
 LABEL:
@@ -57,7 +51,7 @@ LABEL:
  return ;
  }
 }
-#line 97 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 98 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 char read(char *mensagem)
 {
 int i;
@@ -80,16 +74,26 @@ return 0;
 }
 
 
-
 unsigned short loop()
 {
   if(read("left"))  PORTB = 0xFF;
 
   if(read("right"))  PORTB = 0x00;
 
+  if(read("esta vivo")) 
+ {
+ TXREG1 = 'P';
+ delay_ms(10);
+ TXREG1 = 'a';
+ delay_ms(10);
+ TXREG1 = 'i';
+ delay_ms(10);
+
+
+
+ }
+
 }
-
-
 
 void interrupt()
 {
@@ -105,10 +109,7 @@ void interrupt()
  *(volatile int *)&GameBuffer[posGameBuffer] = RC2REG;
  posGameBuffer++;
  GameBuffer[posGameBuffer] = 0x00;
-
  }
-
-
 }
 
 void main()
@@ -179,7 +180,6 @@ PIR3.RC2IF = 0x00;
 PIE3.RC2IE = 0x01;
 
 
-
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
 PIE5.TMR6IE = 1;
@@ -190,13 +190,14 @@ TMR6 = 0;
 TMR4 = 0;
 T6CON = 0b00111001;
 T4CON = 0b00111001;
-
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
-delay_ms(10);
+
 
 
 for(i = 0; i <  40 ;i++) buffer[i] = 0xFF;
+
+
 
 posBuffer = 0;
 PORTB = 0x00;

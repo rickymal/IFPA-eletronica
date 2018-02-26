@@ -8,6 +8,9 @@
 #define moduloCelular 1
 #define bgtile (char*) 0x0F45
 
+
+
+
 // https://pt.stackoverflow.com/questions/2983/como-passar-uma-função-como-parâmetro-em-c //
 
 // double *p[x] != double(*p)[x]    O primeiro cria um vetor de ponteiros para inteiros e o segundo cria um único ponteiro para um vetor de x posições
@@ -29,32 +32,27 @@ static char const * const msgTable[];
 typedef char BBuffer[tamanhoBuffer];   //cria uma variavel do tipo "BBuffer" (que na verdade é um char de tamanho 'tamanhoBuffer'
 register BBuffer cache;
 BBuffer *pCache; // ou char (*pCache)[tamanhoBuffer];
+
 #pragma pack(2)
 typedef struct filesys
 {
 unsigned int pos : 1;
+unsigned short : 1;
 unsigned short rand : 4;
-unsigned short : 0;
+struct filesys (*find)(void);
 } filesys;
-
 
  //serve para os timer's 2/4/6 - é possível pre-processa-lo? - função aumenta o pograma em 7kb, não muito prático
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
 {
-double Tof; //tempo de overflow
-double Tmof; //tempo para todos os overflow (multiplos overflows
-int i = 30;
-int resposta[30];
 int prescaler = 1;
 int postscaler = 1;
-Tof = 256*frequencia/4;
-Tmof = tempo_seg/Tof;
-
+int Tmof = (int)(tempo_seg/(256*frequencia/4));
 for(postscaler = 3; postscaler > 0; postscaler--)
 {
  for(prescaler = 16; prescaler > 0; prescaler--)
  {
-    if((int)Tmof%(prescaler*postscaler) == 0) goto LABEL;
+    if(Tmof%(prescaler*postscaler) == 0) goto LABEL;
  }
 }
 LABEL:
@@ -67,7 +65,8 @@ LABEL:
   timer6timer = Tmof / (prescaler + postscaler);
   return ;
   }
-}
+}  
+#define setTime(t,p) setTime(&t,p,__FOSC__ /1000)
 
 /*       Os métodos abaixo não estão sendo utilizados, o programa tem funcionando perfeitamente sem o uso d'eles. Porém, futuramente podem ser necessários
 void limpaBuffer()  //método que realiza a limpeza do buffer, ou melhor, uma mensagem que já foi lida e interpretada
@@ -94,6 +93,8 @@ if(overflow) assist();overflow = 0;
 } //end interrupt low
 
 */
+
+
 char read(char *mensagem) //retorna 1 se a mensagem for encontrada e zero caso não (no buffer, no caso)
 {
 int i;
@@ -115,7 +116,6 @@ for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
 return 0;
 }
 
-
 #define read(t) if(read(t))
 unsigned short loop()
 {
@@ -123,9 +123,20 @@ unsigned short loop()
  
  read("right") PORTB = 0x00;
  
+ read("esta vivo")
+ {
+  TXREG1 = 'P';
+  delay_ms(10);
+  TXREG1 = 'a';
+  delay_ms(10);
+  TXREG1 = 'i';
+  delay_ms(10);
+  
+ 
+ 
+ }
+ 
 }
-
-
 
 void interrupt() //a interrupção de alta prioridade apenas armazenará os dados recebidos (no momento apenas do computador)
 {
@@ -141,10 +152,7 @@ void interrupt() //a interrupção de alta prioridade apenas armazenará os dados r
      *(volatile int *)&GameBuffer[posGameBuffer] = RC2REG; //método para não termos otimização nesta área em específica, sem precisar do volatile
      posGameBuffer++;
      GameBuffer[posGameBuffer] = 0x00;
-  
   }
-  
-
 }
 
 void main()
@@ -214,7 +222,6 @@ PIE3.TX2IE = 0x00;            //desabilita interrupção por tx
 PIR3.RC2IF = 0x00;            //flag setada para um enquanto houver dados para receber e tratar
 PIE3.RC2IE = 0x01;            // habilita a interrpção por rx
 
- #define setTime(t,p) setTime(&t,p,31000000)
 //============= Configurações de Timer's =============== //
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
@@ -226,13 +233,14 @@ TMR6 = 0;
 TMR4 = 0;
 T6CON = 0b00111001; //os valores do timer ainda devem ser ajustados corretamente
 T4CON = 0b00111001; //define um tempo para 10 ms (pode estar errao por hora) considerando uma entrada de 136 vezes na interrupção  e uma frequencia d 31MHz
-//setTime(TMR6, 0.5);
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
-delay_ms(10);
+//setTime(TMR6, 0.5);
 
 //============= Inicio do programa =============== //
 for(i = 0; i < tamanhoBuffer;i++) buffer[i] = 0xFF;
+
+
 
 posBuffer = 0;
 PORTB = 0x00;

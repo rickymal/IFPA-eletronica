@@ -62,22 +62,24 @@ def configurarSerial():
 def serialMensagem():
     global ser;
     asc = input('digite a instrução de envio: ')
-    print(asc);
-    ser.write(b'left')
+    ser.write(asc.encode())
     
     
-
+def readSerial():
+     print(ser.read(3));
 
 #o programa
 
 print('Programa de comunicaçao entre canal udp e serial\r\n');
-
+ser.baundrate = 115200;
+ser.port = 'COM5'
+ser.open();
 while True:
-    comando = input('digite o comando que deseja executa: ');
+    comando = input('digite o comando que deseja executa: ');  
     if comando == 'ajuda':
         print('digite \'ajuda\' para exibir esta lista.');
-        print('digite \'udp\' para realizar configurações do servidor udp, tal como IP e portas.');
-        print('digite \'serial\' para realizar configurações do canal serial, como baundrate e a porta manualmente.');
+        print('digite \'configurarUdp\' para realizar configurações do servidor udp, tal como IP e portas.');
+        print('digite \'configurarSerial\' para realizar configurações do canal serial, como baundrate e a porta manualmente.');
     elif comando == 'udp':
               x = input('digite o IP que será utilizado. (padrão: {})'.format(localhost))
               if x != "":
@@ -88,13 +90,15 @@ while True:
               x = input('digite a porta para a comunicaçao oposta, entre udp e serial. (padrão: {}'.format(serial2))
               if x != "":
                   serial2 = x;
-    elif comando == 'serial':
+    elif comando == 'configurarserial':
         configurarSerial()
     elif comando == 'initudp':
         iniciarUdp();
         time.sleep(0.5);
     elif comando == 'initserial':
         serialMensagem();
+    elif comando == 'readserial':
+        readSerial();
     else:
         print('comando não encontrado\r\n');
 

@@ -1,24 +1,13 @@
 #line 1 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-#line 18 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-register char buffer[ 40 ];
-register char GameBuffer[ 40 ];
-volatile int posBuffer = 0;
-volatile int posGameBuffer = 0;
-unsigned int margeIn;
-unsigned int margeOut;
-unsigned short tent;
-unsigned short using_assist = 0;
+#line 24 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+register char bufferPc[ 50 ];
+register char bufferModulo[ 50 ];
+volatile int posBufferPc = 0;
+volatile int posBufferModulo = 0;
 unsigned short retorno;
-char timer4timer , timer6timer;
-typedef int (*entradaParaFunc)();
-void (*assist)();
-unsigned char valor = 3 absolute 0x0F45;
-static char const * const msgTable[];
-typedef char BBuffer[ 40 ];
-register BBuffer cache;
-BBuffer *pCache;
+unsigned char timer4timer , timer6timer;
 #pragma pack(2)
-#line 37 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+#line 33 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 typedef struct filesys
 {
 unsigned int pos : 1;
@@ -32,7 +21,7 @@ void setTime(sfr unsigned short volatile *timer, double tempo_seg, double freque
 {
 int prescaler = 1;
 int postscaler = 1;
-int Tmof = (int)(tempo_seg/(256*frequencia/4));
+int Tmof = (int)(tempo_seg/(256*(frequencia*1000)/4));
 for(postscaler = 3; postscaler > 0; postscaler--)
 {
  for(prescaler = 16; prescaler > 0; prescaler--)
@@ -51,21 +40,20 @@ LABEL:
  return ;
  }
 }
-#line 98 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-char read(char *mensagem)
+
+
+
+char read(char *mensagem, unsigned char *buf)
 {
 int i;
 int j = 0;
-for(i = 0 ; buffer[i] != 0x00; i+= 1 + j)
+for(i = 0 ; buf[i] != 0x00; i+= 1 + j)
 {
- for(j = 0; mensagem[j] == buffer[i+j]; j++)
+ for(j = 0; mensagem[j] == buf[i+j]; j++)
  {
  if(mensagem[j+1] == 0x00)
  {
- margeIn = i;
- margeOut = i+j;
- buffer[i+j] = 0xFF;
- buffer[i+j-1] = 0xFF;
+ buf[i+j] = 0xFF;
  return 1;
  }
  }
@@ -74,42 +62,75 @@ return 0;
 }
 
 
+
+
+void escrever(char paraQuem, char *mensagem)
+{
+ int i;
+ sfr unsigned short volatile *regSend;
+ if(paraQuem = 'p') regSend = &TXREG1;
+ else regSend = &TXREG2;
+ for(i = 0; mensagem[i] != 0x00; i++)
+ {
+ *regSend = mensagem[i];
+ delay_ms(1);
+ }
+ *regSend = '\n';
+}
+
 unsigned short loop()
 {
-  if(read("left"))  PORTB = 0xFF;
-
-  if(read("right"))  PORTB = 0x00;
-
-  if(read("esta vivo")) 
- {
- TXREG1 = 'P';
- delay_ms(10);
- TXREG1 = 'a';
- delay_ms(10);
- TXREG1 = 'i';
- delay_ms(10);
 
 
 
- }
+ if(read("esta vivo?",bufferPc))  escrever('p', "Estou vivo sim, muito obrigado pela preocupacao!");
 
+ if(read("BlocoEnergizado",bufferPc)) 
+{
+ TRISB = 0x00;
+ PORTB = 0xFF;
+ delay_ms(1000);
+ PORTB = 0x00;
+}
+
+ if(read("relatorio",bufferPc)) 
+{
+ escrever('p', "Autor: Henrique Mauler Borges");
+}
+
+ if(read("Qual a sua frequencia?",bufferPc)) 
+{
+ char saidaclock[10];
+ unsigned short clock = Clock_MHz();
+ ShortToStr(clock, saidaclock);
+
+ escrever('p', "A frequencia de trabalho é: ");
+ escrever('p', saidaclock);
+
+
+
+
+}
+#line 147 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 }
 
 void interrupt()
 {
  if(RC1IF_bit)
  {
- buffer[posBuffer] = RC1REG;
- posBuffer++;
- buffer[posBuffer] = 0x00;
+ bufferPc[posBufferPc] = RC1REG;
+ posBufferPc++;
+ bufferPc[posBufferPc] = 0x00;
  }
-
- if(RC2IF_bit)
+ else if(RC2IF_bit)
  {
- *(volatile int *)&GameBuffer[posGameBuffer] = RC2REG;
- posGameBuffer++;
- GameBuffer[posGameBuffer] = 0x00;
+
+ bufferModulo[posBufferModulo] = RC2REG;
+ posBufferModulo++;
+ bufferModulo[posBufferModulo] = 0x00;
  }
+ T6CON.TMR6ON = 1;
+ TMR6 = 0;
 }
 
 void main()
@@ -182,31 +203,42 @@ PIE3.RC2IE = 0x01;
 
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
-PIE5.TMR6IE = 1;
-PIR5.TMR4IE = 1;
+
+
 IPR5.TMR6IP = 0;
 IPR5.TMR4IP = 0;
 TMR6 = 0;
 TMR4 = 0;
-T6CON = 0b00111001;
+T6CON = 0b01111011;
 T4CON = 0b00111001;
 T6CON.TMR6ON = 0;
 T6CON.TMR4ON = 0;
 
 
 
-for(i = 0; i <  40 ;i++) buffer[i] = 0xFF;
+for(i = 0; i <  50 ;i++) bufferPc[i] = bufferModulo[i] = 0xFF;
 
 
 
-posBuffer = 0;
+posBufferPc = 0;
+posBufferModulo = 0;
 PORTB = 0x00;
 while(1)
 {
  retorno = loop();
- if(posBuffer > 35)
+ if(PIR5.TMR6IF)
  {
- posBuffer = 0;
+ PIR5.TMR6IF = 0;
+ T6CON.TMR6ON = 0;
+ if(posBufferPc >  2* 50 /3  + 5)
+ {
+ posBufferPc = 0;
+ }
+ if(posBufferModulo >  2* 50 /3 )
+ {
+ posBufferModulo = 0;
+ }
+
 
  }
  }

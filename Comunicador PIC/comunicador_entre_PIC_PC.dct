@@ -2092,7 +2092,6 @@ anselc
 anseld
 ansele
 asin
-assist
 atan
 atan2
 atof
@@ -2198,7 +2197,8 @@ brush
 brush
 brush
 bsr
-buffer
+buffermodulo
+bufferpc
 button
 byte2double
 bytetohex
@@ -2312,7 +2312,6 @@ c5tsel0
 c5tsel0_bit
 c5tsel1
 c5tsel1_bit
-cache
 canspigetoperationmode
 canspiinitialize
 canspiread
@@ -2831,6 +2830,7 @@ enable
 enable
 enable
 equals_double
+escrever
 exp
 expander_init
 expander_init_advanced
@@ -3996,7 +3996,6 @@ g
 g
 g
 g
-gamebuffer
 gcen
 gcen_bit
 gcen_ssp1con2_bit
@@ -4456,8 +4455,6 @@ man_receive_init
 man_send
 man_send_init
 man_synchro
-margein
-margeout
 mask
 mask
 mask
@@ -4779,7 +4776,6 @@ p3ssbd0_bit
 p3ssbd1
 p3ssbd1_bit
 pc
-pcache
 pcie
 pcie_bit
 pcie_ssp1con3_bit
@@ -4880,8 +4876,8 @@ portb
 portc
 portd
 porte
-posbuffer
-posgamebuffer
+posbuffermodulo
+posbufferpc
 postdec0
 postdec1
 postdec2
@@ -6295,7 +6291,6 @@ tblptr
 tblptrh
 tblptrl
 tblptru
-tent
 tgen
 tgen_bit
 time
@@ -6671,11 +6666,9 @@ updatecontextflags
 updatemode
 updatemode
 updatemode
-using_assist
 val
 val
 val
-valor
 vcycle
 vcycle
 vcycle

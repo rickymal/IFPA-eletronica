@@ -1,20 +1,26 @@
 #line 1 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
 #line 24 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-register char bufferPc[ 50 ];
-register char bufferModulo[ 50 ];
+register char bufferPc[ 60 ];
+register char bufferModulo[ 60 ];
 volatile int posBufferPc = 0;
 volatile int posBufferModulo = 0;
 unsigned short retorno;
 unsigned char timer4timer , timer6timer;
+unsigned int lastPos;
+unsigned int margeIn,margeOut = 0;
 #pragma pack(2)
-#line 33 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
-typedef struct filesys
+#line 36 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+struct flags
 {
-unsigned int pos : 1;
+unsigned short flag1 : 1;
 unsigned short : 1;
-unsigned short rand : 4;
-struct filesys (*find)(void);
-} filesys;
+unsigned short flag2 : 4;
+struct flags (*find)(void);
+};
+typedef struct flags filesys;
+filesys bandeira;
+
+
 
 
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
@@ -53,7 +59,9 @@ for(i = 0 ; buf[i] != 0x00; i+= 1 + j)
  {
  if(mensagem[j+1] == 0x00)
  {
- buf[i+j] = 0xFF;
+ margeIn = i;
+ margeOut = i+j;
+ buf[margeOut] = buf[margeIn] = 0xFF;
  return 1;
  }
  }
@@ -81,37 +89,72 @@ void escrever(char paraQuem, char *mensagem)
 unsigned short loop()
 {
 
-
-
- if(read("esta vivo?",bufferPc))  escrever('p', "Estou vivo sim, muito obrigado pela preocupacao!");
-
- if(read("BlocoEnergizado",bufferPc)) 
-{
- TRISB = 0x00;
- PORTB = 0xFF;
- delay_ms(1000);
- PORTB = 0x00;
-}
-
  if(read("relatorio",bufferPc)) 
 {
  escrever('p', "Autor: Henrique Mauler Borges");
+ escrever('p', "Curso técnico em eletrônica");
+ return 0;
 }
 
  if(read("Qual a sua frequencia?",bufferPc)) 
 {
  char saidaclock[10];
  unsigned short clock = Clock_MHz();
- ShortToStr(clock, saidaclock);
-
  escrever('p', "A frequencia de trabalho é: ");
  escrever('p', saidaclock);
+ return 0;
+}
+
+ if(read("invadido",bufferPc)) 
+{
+ escrever('m',"invasao");
+ return 0;
+}
 
 
+ if(read("Me responda micro!",bufferPc)) 
+{
+ TRISB = 0x00;
+ PORTB = 0xFF;
+ delay_ms(2000);
+ PORTB = 0x00;
+ delay_ms(20000);
+ PORTB = 0xFF;
+ escrever('p',"valor2");
+ return 0;
 
 
 }
-#line 147 "C:/Users/Henrique Mauler/Documents/Programação/C/Trabalhos 2018/Conectando Celular e Minecraft/Comunicador PIC/comunicador_entre_PIC_PC.c"
+
+ if(read("BlocoEnergizado:8:Intensidade:15",bufferPc)) 
+{
+ escrever('m',"Invadido");
+}
+else  if(read("BlocoEnergizado:10:Intensidade:15",bufferPc)) 
+{
+ escrever('m',"Horario:dia");
+}
+else  if(read("BlocoEnergizado:10:Intensidade:1",bufferPc)) 
+{
+ escrever('m',"Horario:noite");
+}
+
+
+
+
+
+
+
+ if(read("LED1",bufferModulo))  escrever('p',"valor2");
+else  if(read("LED2",bufferModulo))  escrever('p',"valor3");
+else  if(read("LED3",bufferModulo))  escrever('p',"valor4");
+else  if(read("LED4",bufferModulo))  escrever('p',"valor5");
+ return 1;
+
+
+
+
+
 }
 
 void interrupt()
@@ -136,6 +179,7 @@ void interrupt()
 void main()
 {
 int i;
+
 
 
 TXSTA1.BRGH = 1;
@@ -203,8 +247,6 @@ PIE3.RC2IE = 0x01;
 
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
-
-
 IPR5.TMR6IP = 0;
 IPR5.TMR4IP = 0;
 TMR6 = 0;
@@ -216,7 +258,7 @@ T6CON.TMR4ON = 0;
 
 
 
-for(i = 0; i <  50 ;i++) bufferPc[i] = bufferModulo[i] = 0xFF;
+for(i = 0; i <  60 ;i++) bufferPc[i] = bufferModulo[i] = 0xFF;
 
 
 
@@ -226,20 +268,19 @@ PORTB = 0x00;
 while(1)
 {
  retorno = loop();
+
  if(PIR5.TMR6IF)
  {
  PIR5.TMR6IF = 0;
  T6CON.TMR6ON = 0;
- if(posBufferPc >  2* 50 /3  + 5)
+ if(posBufferPc >  2* 60 /3  + 5)
  {
  posBufferPc = 0;
  }
- if(posBufferModulo >  2* 50 /3 )
+ if(posBufferModulo >  2* 60 /3 )
  {
  posBufferModulo = 0;
  }
-
-
  }
  }
 }

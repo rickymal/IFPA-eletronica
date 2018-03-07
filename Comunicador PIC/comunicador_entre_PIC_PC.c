@@ -1,4 +1,4 @@
-#define tamanhoBuffer 50
+#define tamanhoBuffer 60
 #define offset 2*tamanhoBuffer/3
 #define servico_limpar_buffer 1
 #define servico_reiniciar_buffer 0
@@ -27,16 +27,23 @@ volatile int posBufferPc = 0;
 volatile int posBufferModulo = 0;
 unsigned short retorno;
 unsigned char timer4timer , timer6timer;
+unsigned int lastPos;
+unsigned int margeIn,margeOut = 0;
+
 
 
 #pragma pack(2)
-typedef struct filesys
+struct flags
 {
-unsigned int pos : 1;
+unsigned short flag1 : 1;
 unsigned short : 1;
-unsigned short rand : 4;
-struct filesys (*find)(void);
-} filesys;
+unsigned short flag2 : 4;
+struct flags (*find)(void);
+};
+typedef struct flags filesys;
+filesys bandeira;
+
+
 
 
 void setTime(sfr unsigned short volatile *timer, double tempo_seg, double frequencia)
@@ -75,7 +82,9 @@ for(i = 0 ; buf[i] != 0x00; i+= 1 + j)
  {
   if(mensagem[j+1] == 0x00)
   {
-   buf[i+j] = 0xFF;
+   margeIn = i;
+   margeOut = i+j;
+   buf[margeOut] = buf[margeIn] = 0xFF;
    return 1;
   }
  }
@@ -102,58 +111,73 @@ void escrever(char paraQuem, char *mensagem)
 
 unsigned short loop()
 {
-#define read(t) if(read(t,bufferPc))  //dados recebidos do computador
-
-
-read("esta vivo?") escrever('p', "Estou vivo sim, muito obrigado pela preocupacao!");
-
-read("BlocoEnergizado")
-{
-  TRISB = 0x00;
-  PORTB = 0xFF; 
-  delay_ms(1000); 
-  PORTB = 0x00;
-}
-
+#define read(t) if(read(t,bufferPc)) //dados recebidos do modulo
 read("relatorio")
 {
  escrever('p', "Autor: Henrique Mauler Borges");
+ escrever('p', "Curso técnico em eletrônica");
+ return 0;
 }
 
 read("Qual a sua frequencia?")
 {
  char saidaclock[10];
  unsigned short clock = Clock_MHz();
- ShortToStr(clock, saidaclock);
-
  escrever('p', "A frequencia de trabalho é: ");
  escrever('p', saidaclock);
- 
-read("Enviando conteudo para mine")
+ return 0;
+}
+
+read("invadido")
+{
+ escrever('m',"invasao");
+ return 0;
+}
+
+
+read("Me responda micro!")
 {
  TRISB = 0x00;
  PORTB = 0xFF;
- delay_ms(30000);
+ delay_ms(2000);
  PORTB = 0x00;
+ delay_ms(20000);
+ PORTB = 0xFF;
+ escrever('p',"valor2");
+ return 0;
 
 
 }
 
-
-
-
+read("BlocoEnergizado:8:Intensidade:15")
+{
+ escrever('m',"Invadido");
 }
-
-
-
- 
-
-
-
-
+else read("BlocoEnergizado:10:Intensidade:15")
+{
+ escrever('m',"Horario:dia");
+}
+else read("BlocoEnergizado:10:Intensidade:1")
+{
+ escrever('m',"Horario:noite");
+}
 
 
 #define read(t) if(read(t,bufferModulo)) //dados recebidos do modulo
+
+
+
+
+read("LED1") escrever('p',"valor2");
+else read("LED2") escrever('p',"valor3");
+else read("LED3") escrever('p',"valor4");
+else read("LED4") escrever('p',"valor5");
+ return 1;
+
+
+
+
+
 }
 
 void interrupt() //a interrupção de alta prioridade apenas armazenará os dados recebidos (no momento apenas do computador)
@@ -178,6 +202,7 @@ void interrupt() //a interrupção de alta prioridade apenas armazenará os dados r
 void main()
 {
 int i;
+
 //============ Configurando o BaundRate =========== //
 
 TXSTA1.BRGH = 1; //Habilita o Intenso Baundrate (usa dois registradores para realiar a contagem de bits por segundo)
@@ -245,8 +270,6 @@ PIE3.RC2IE = 0x01;            // habilita a interrpção por rx
 //============= Configurações de Timer's =============== //
 PIR5.TMR6IF = 0;
 PIR5.TMR4IF = 0;
-//PIE5.TMR6IE = 1;
-//PIR5.TMR4IE = 1;
 IPR5.TMR6IP = 0;
 IPR5.TMR4IP = 0;
 TMR6 = 0;
@@ -268,11 +291,12 @@ PORTB = 0x00;
 while(1)
 {
     retorno = loop();
+    
     if(PIR5.TMR6IF)
     {
     PIR5.TMR6IF = 0;
     T6CON.TMR6ON = 0;
-     if(posBufferPc > offset + 5)   //chance de corrupção de dados
+     if(posBufferPc > offset + 5)
      {
      posBufferPc = 0;
      }
@@ -280,8 +304,6 @@ while(1)
      {
      posBufferModulo = 0;
      }
-    
-    
     }
   }
 }

@@ -3,7 +3,4 @@ main
 	loop
 		read
 		escrever
-		ShortToStr
-			ByteToStr
-				Div_8X8_U
 interrupt
